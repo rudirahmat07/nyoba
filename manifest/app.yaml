@@ -6,12 +6,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/rudirahmat07/nyoba2.git
+    repoURL: https://github.com/rudirahmat07/Nyoba2.git
     targetRevision: main
-    path:
+    path: nyoba-echo
   destination:
     server: https://kubernetes.default.svc
-    namespace: staging
+    namespace: rudi
   syncPolicy:
     automated:
       prune: true
