@@ -88,8 +88,8 @@ jobs:
           git config --global user.name "GitHub Actions"
           
           # Clone the manifest repository
-          git clone https://${{ secrets.REPO_TOKEN }}@github.com/k0wl0n/kci-manifest.git
-          cd kci-manifest
+          git clone https://${{ secrets.REPO_TOKEN }}@github.com/rudirahmat07/nyoba2.git
+          cd nyoba2
           
           # Create directory structure if it doesn't exist
           mkdir -p nyoba-echo
