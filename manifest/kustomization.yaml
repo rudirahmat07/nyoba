@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- deployment.yaml
+- service.yaml
+- secrets.yaml
+- virtual-service.yaml
+
+namespace: staging
+
+images:
+- name: nyoba-echo
+  newName: rudirahmat07/golangechov2
+  newTag: v2
+# The actual values will be replaced during the CI/CD pipeline
+# Run: kustomize build . | kubectl apply -f -

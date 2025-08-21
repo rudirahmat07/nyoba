@@ -1,0 +1,12 @@
+apiVersion: v2
+kind: Service
+metadata:
+  name: nyoba-echo
+spec:
+  selector:
+    app: nyoba-echo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
