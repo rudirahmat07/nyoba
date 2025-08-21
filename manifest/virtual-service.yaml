@@ -1,11 +1,11 @@
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: laravel-app
-  namespace: laravel-app
+  name: nyoba-echo
+  namespace: rudi
 spec:
   hosts:
-    - "laravel.kci.dpdns.org"
+    - "nyobaecho.kci.dpdns.org"
   gateways:
     - istio-system/apps
   http:
@@ -14,6 +14,6 @@ spec:
             prefix: /
       route:
         - destination:
-            host: laravel-app
+            host: nyoba-echo
             port:
               number: 80
