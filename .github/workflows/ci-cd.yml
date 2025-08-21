@@ -9,8 +9,8 @@ on:
 env:
   PROJECT_ID: sandbox-wahyu-anggana
   REGISTRY: asia-southeast1-docker.pkg.dev
-  REGISTRY_REPO: nyoba
-  IMAGE_NAME: rudirahmat07/golangechov2
+  REGISTRY_REPO: kci-dev
+  IMAGE_NAME: nyoba
   DEPLOYMENT_REPO: ${{ secrets.DEPLOYMENT_REPO }}
   DEPLOYMENT_REPO_TOKEN: ${{ secrets.DEPLOYMENT_REPO_TOKEN }}
 
