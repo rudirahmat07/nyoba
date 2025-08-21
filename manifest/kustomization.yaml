@@ -11,7 +11,7 @@ namespace: staging
 
 images:
 - name: nyoba-echo
-  newName: rudirahmat07/golangechov2
+  newName: asia-southeast1-docker.pkg.dev/sandbox-wahyu-anggana/kci-dev/nyoba-echo
   newTag: v2
 # The actual values will be replaced during the CI/CD pipeline
 # Run: kustomize build . | kubectl apply -f -

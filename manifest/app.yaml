@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/rudirahmat07/nyoba.git
+    repoURL: https://github.com/rudirahmat07/nyoba2.git
     targetRevision: main
     path:
   destination:

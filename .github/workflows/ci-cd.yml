@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  PROJECT_ID: sandbox-wahyu-anggana
+  REGISTRY: asia-southeast1-docker.pkg.dev
+  REGISTRY_REPO: nyoba
+  IMAGE_NAME: rudirahmat07/golangechov2
+  DEPLOYMENT_REPO: ${{ secrets.DEPLOYMENT_REPO }}
+  DEPLOYMENT_REPO_TOKEN: ${{ secrets.DEPLOYMENT_REPO_TOKEN }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Setup Google Cloud auth with Workload Identity Federation
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: 'projects/1079553567400/locations/global/workloadIdentityPools/my-gke-cluster-github-pool/providers/github-provider'
+          service_account: 'my-gke-cluster-github-actions@sandbox-wahyu-anggana.iam.gserviceaccount.com'
+
+      # Configure Docker to use the gcloud command-line tool for authentication
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      # Configure Docker to use the gcloud credential helper for artifact registry
+      - name: Docker auth for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      # Build and tag the Docker image
+      - name: Build Docker image
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          docker build -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:$SHORT_SHA -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:latest .
+
+      # Push the Docker image to Google Artifact Registry
+      - name: Push to Artifact Registry
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:$SHORT_SHA
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:latest
+
+  build-and-push-manifests:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Install kustomize
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: "4.5.7"
+      
+      # Update the image tag in kustomization.yaml
+      - name: Update Kubernetes resources
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd manifest
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          kustomize edit set image nyoba-echo=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:$SHORT_SHA
+          cat kustomization.yaml
+
+      # Push Kustomize manifests to GitOps repo
+      - name: Push Kustomize manifests to GitOps repo
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # Clone the manifest repository
+          git clone https://${{ secrets.REPO_TOKEN }}@github.com/k0wl0n/kci-manifest.git
+          cd kci-manifest
+          
+          # Create directory structure if it doesn't exist
+          mkdir -p nyoba-echo
+          
+          # Copy manifest files from the source repo
+          cp -r "$GITHUB_WORKSPACE/manifest/"* ./nyoba-echo/
+          
+          # Add, commit and push changes
+          git add .
+          
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          
+          # Check if there are any changes to commit
+          if git status --porcelain | grep .; then
+            git commit -m "Deploy laravel-app $SHORT_SHA"
+            git push
+          else
+            echo "No changes to commit"
+          fi
